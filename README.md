@@ -267,5 +267,21 @@ python crew.py 1
 
 ## 참고
 
+### Firecracker
 - [Firecracker GitHub](https://github.com/firecracker-microvm/firecracker)
+- [Firecracker Design](https://github.com/firecracker-microvm/firecracker/blob/main/docs/design.md)
+- [Firecracker Getting Started](https://github.com/firecracker-microvm/firecracker/blob/main/docs/getting-started.md)
+- [Firecracker REST API](https://github.com/firecracker-microvm/firecracker/blob/main/src/api_server/swagger/firecracker.yaml)
 - [Kata Containers with Firecracker](https://github.com/kata-containers/kata-containers/blob/main/docs/how-to/how-to-use-kata-containers-with-firecracker.md)
+
+### CrewAI
+- [CrewAI GitHub](https://github.com/crewAIInc/crewAI)
+- [CrewAI Docs](https://docs.crewai.com)
+- [CrewAI Tools](https://docs.crewai.com/concepts/tools)
+- [CrewAI LLM](https://docs.crewai.com/concepts/llms)
+
+### 관련 기술
+- [xterm.js](https://xtermjs.org)
+- [FastAPI](https://fastapi.tiangolo.com)
+- [paramiko](https://www.paramiko.org)
+- [Google Gemini API](https://aistudio.google.com)
