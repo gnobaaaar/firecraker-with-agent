@@ -22,12 +22,12 @@ graph TB
 
     subgraph Linux["Linux (Ubuntu)"]
         subgraph Server["FastAPI server.py"]
-            CREW["CrewAI Agents\nVM Manager / Test Runner / Analyzer"]
-            BRIDGE["WebSocket-SSH 브리지\n샌드박스 모드"]
+            CREW["CrewAI Agents<br/>VM Manager / Test Runner / Analyzer"]
+            BRIDGE["WebSocket-SSH 브리지<br/>샌드박스 모드"]
         end
 
         subgraph FC["Firecracker 프로세스"]
-            VM["microVM (KVM)\nkernel: vmlinux\nrootfs: ubuntu-18.04.ext4\nIP: 172.16.0.2"]
+            VM["microVM (KVM)<br/>kernel: vmlinux<br/>rootfs: ubuntu-18.04.ext4<br/>IP: 172.16.0.2"]
             TAP["tap0 172.16.0.1"]
         end
     end
@@ -45,21 +45,21 @@ graph TB
 
 ```mermaid
 flowchart TD
-    Browser["브라우저\n(xterm.js)"]
+    Browser["브라우저<br/>(xterm.js)"]
     WS["WebSocket"]
-    Server["FastAPI 서버\nserver.py"]
+    Server["FastAPI 서버<br/>server.py"]
     Bridge["SSH 브리지"]
-    CrewAI["CrewAI Agents\n(LLM 모드)"]
+    CrewAI["CrewAI Agents<br/>(LLM 모드)"]
     FC["Firecracker 프로세스"]
-    VM["microVM\n172.16.0.2"]
-    TAP["tap0\n172.16.0.1"]
+    VM["microVM<br/>172.16.0.2"]
+    TAP["tap0<br/>172.16.0.1"]
 
     Browser -->|"키 입력"| WS
     WS -->|"텍스트"| Server
     Server --> Bridge
     Server --> CrewAI
     Bridge -->|"SSH"| VM
-    CrewAI -->|"Unix Socket\nREST API"| FC
+    CrewAI -->|"Unix Socket REST API"| FC
     FC --> VM
     TAP <-->|"가상 네트워크"| VM
 ```
