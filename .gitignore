@@ -1,0 +1,36 @@
+# 환경변수
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Firecracker 런타임 파일
+/tmp/firecracker-*.sock
+/tmp/firecracker-*.pid
+
+# VM 이미지 (용량 큼)
+resources/vmlinux
+resources/rootfs.ext4
+resources/*.tgz
+resources/*.ext4
+
+# SSH 키
+*.pem
+*.key
+firecracker_key
+firecracker_key.pub
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

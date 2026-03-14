@@ -1,0 +1,7 @@
+crewai==0.80.0
+paramiko==3.4.0
+google-generativeai>=0.8.0
+python-dotenv>=1.0.0
+fastapi>=0.115.0
+uvicorn>=0.30.0
+websockets>=12.0

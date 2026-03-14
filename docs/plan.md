@@ -89,22 +89,22 @@ firecracker-with-agent/
 | Firecracker API | requests-unixsocket | Unix socket 위 REST |
 | 커널 | Firecracker 공식 vmlinux | 검증된 최소 커널 |
 | rootfs | Alpine Linux 기반 | 이미지 크기 최소화 |
-| 실행 환경 | Linux (KVM 필수) | Firecracker 요구사항 |
+| 실행 환경 | WSL2 Ubuntu (KVM 필수) | Firecracker 요구사항, Windows에서 WSL2로 접근 |
 
 ## 환경 전략: 개발 vs 운영 테스트
 
-### 개발 환경 (macOS)
+### 개발 환경 (Windows)
 
-macOS에서 Lima 또는 OrbStack으로 Linux VM/컨테이너를 띄워 개발한다.
+Windows에서 WSL2(Ubuntu)를 통해 Linux 환경을 구성하여 개발한다.
 
 | 도구 | 방식 | 비고 |
 |------|------|------|
-| Lima | Linux VM (KVM 에뮬레이션) | 가장 범용적 |
-| OrbStack | 경량 Linux VM | macOS 친화적, 빠른 시작 |
+| WSL2 (Ubuntu 24.04) | 경량 Linux 커널 VM | Windows 11 기본 탑재, KVM 지원 |
 
-- Firecracker 프로세스는 Lima/OrbStack 내부 Linux에서 실행
-- 코드 편집은 macOS에서 하고, 실행만 VM 안에서 수행
-- TAP 네트워크, KVM 등 Linux 전용 기능은 VM 내부에서 처리
+- Firecracker 프로세스는 WSL2 내부 Linux에서 실행
+- 코드 편집은 Windows VSCode(Remote - WSL 확장)에서, 실행만 WSL2 안에서 수행
+- TAP 네트워크, KVM 등 Linux 전용 기능은 WSL2 내부에서 처리
+- Windows 11 + WSL2 커널 5.15+ 기준 `/dev/kvm` 접근 가능
 
 ### 운영 테스트 환경 (Kubernetes)
 
@@ -136,16 +136,16 @@ macOS에서 Lima 또는 OrbStack으로 Linux VM/컨테이너를 띄워 개발한
 
 ## 단계별 구현 계획
 
-### 1단계: 개발 (macOS → Lima/OrbStack)
+### 1단계: 개발 (Windows → WSL2)
 
 | 단계 | 내용 | 산출물 |
 |------|------|--------|
-| 1 | 환경 구축 | Lima/OrbStack Linux VM + Firecracker 바이너리 + TAP 네트워크 |
+| 1 | 환경 구축 | WSL2 Ubuntu + Firecracker 바이너리 + TAP 네트워크 |
 | 2 | Firecracker API 클라이언트 | `tools/firecracker_api.py` |
 | 3 | VM 부팅 테스트 | 수동 VM 생성 → SSH 접속 확인 |
 | 4 | CrewAI 툴 래핑 | `tools/` 디렉토리 전체 |
 | 5 | Agent/Task 정의 | `agents/`, `crew.py`, `tasks.py` |
-| 6 | 로컬 e2e 테스트 | Lima/OrbStack 내 전체 파이프라인 동작 확인 |
+| 6 | 로컬 e2e 테스트 | WSL2 내 전체 파이프라인 동작 확인 |
 
 ### 2단계: 운영 테스트 (Kubernetes 클러스터)
 
@@ -159,7 +159,8 @@ macOS에서 Lima 또는 OrbStack으로 Linux VM/컨테이너를 띄워 개발한
 
 ## 핵심 제약사항
 
-- Firecracker는 **Linux + KVM 전용** → macOS에서 직접 실행 불가 (VM 필수)
+- Firecracker는 **Linux + KVM 전용** → Windows에서 직접 실행 불가, **WSL2 필수**
+- WSL2에서 `/dev/kvm` 사용하려면 Windows 11 + Hyper-V 가상화 활성화 필요
+- TAP 네트워크 설정에 **root 권한** 필요 (WSL2: `sudo` 또는 파드: privileged or CAP_NET_ADMIN)
 - 파드 실행 시 `/dev/kvm` 마운트 + 노드에 KVM 지원 필요
-- TAP 네트워크 설정에 **root 권한** 필요 (파드: privileged or CAP_NET_ADMIN)
 - Kubernetes 노드는 **Ubuntu VM** (nested virtualization 또는 베어메탈)

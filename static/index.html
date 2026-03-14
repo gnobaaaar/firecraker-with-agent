@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Firecracker Sandbox</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d1117;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #161b22;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #21262d;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f0883e;
+      letter-spacing: 1px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: #21262d;
+      color: #8b949e;
+    }
+
+    #status {
+      margin-left: auto;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #8b949e;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #484f58;
+    }
+    .dot.connected { background: #3fb950; }
+    .dot.connecting { background: #d29922; animation: pulse 1s infinite; }
+    .dot.disconnected { background: #f85149; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── 랜딩 화면 ── */
+    #landing {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+    }
+
+    .landing-icon {
+      font-size: 64px;
+    }
+
+    .landing-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #c9d1d9;
+    }
+
+    .landing-desc {
+      font-size: 14px;
+      color: #8b949e;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .specs {
+      display: flex;
+      gap: 16px;
+    }
+
+    .spec-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 16px 24px;
+      text-align: center;
+    }
+
+    .spec-card .label {
+      font-size: 11px;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    .spec-card .value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #58a6ff;
+    }
+
+    #connect-btn {
+      background: #238636;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    #connect-btn:hover { background: #2ea043; }
+    #connect-btn:disabled {
+      background: #21262d;
+      color: #484f58;
+      cursor: not-allowed;
+    }
+
+    /* ── 터미널 화면 ── */
+    #terminal-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #terminal-toolbar {
+      background: #161b22;
+      border-bottom: 1px solid #21262d;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tb-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    .tb-red { background: #f85149; }
+    .tb-yellow { background: #d29922; }
+    .tb-green { background: #3fb950; }
+
+    #terminal-wrapper {
+      flex: 1;
+      padding: 12px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    #terminal {
+      flex: 1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🔥 Firecracker Sandbox</h1>
+  <span class="badge">microVM</span>
+  <div id="status">
+    <div class="dot disconnected" id="dot"></div>
+    <span id="status-text">대기 중</span>
+  </div>
+</header>
+
+<!-- 랜딩 화면 -->
+<div id="landing">
+  <div class="landing-icon">🖥️</div>
+  <div class="landing-title">Firecracker microVM 샌드박스</div>
+  <div class="landing-desc">
+    격리된 Linux 환경에서 안전하게 명령을 실행합니다.<br>
+    연결하면 즉시 터미널이 시작됩니다.
+  </div>
+  <div class="specs">
+    <div class="spec-card">
+      <div class="label">vCPU</div>
+      <div class="value">1</div>
+    </div>
+    <div class="spec-card">
+      <div class="label">메모리</div>
+      <div class="value">128 MiB</div>
+    </div>
+    <div class="spec-card">
+      <div class="label">OS</div>
+      <div class="value">Ubuntu 18.04</div>
+    </div>
+    <div class="spec-card">
+      <div class="label">부팅 시간</div>
+      <div class="value">~200ms</div>
+    </div>
+  </div>
+  <button id="connect-btn" onclick="connect()">터미널 접속</button>
+</div>
+
+<!-- 터미널 화면 -->
+<div id="terminal-view">
+  <div id="terminal-toolbar">
+    <div class="tb-dot tb-red"></div>
+    <div class="tb-dot tb-yellow"></div>
+    <div class="tb-dot tb-green"></div>
+  </div>
+  <div id="terminal-wrapper">
+    <div id="terminal"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script>
+  const dot = document.getElementById('dot');
+  const statusText = document.getElementById('status-text');
+  const connectBtn = document.getElementById('connect-btn');
+
+  let term, fitAddon, ws;
+
+  function setStatus(state, text) {
+    dot.className = 'dot ' + state;
+    statusText.textContent = text;
+  }
+
+  function connect() {
+    connectBtn.disabled = true;
+    connectBtn.textContent = 'VM 시작 중...';
+    setStatus('connecting', 'VM 시작 중...');
+
+    // 터미널 초기화
+    term = new Terminal({
+      theme: {
+        background: '#0d1117',
+        foreground: '#c9d1d9',
+        cursor: '#58a6ff',
+        selectionBackground: '#264f78',
+        red: '#f85149',
+        green: '#3fb950',
+        yellow: '#d29922',
+        blue: '#58a6ff',
+        magenta: '#bc8cff',
+        cyan: '#39c5cf',
+      },
+      fontSize: 14,
+      fontFamily: '"Cascadia Code", "Fira Code", "Consolas", monospace',
+      cursorBlink: true,
+      scrollback: 5000,
+    });
+
+    fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    // 화면 전환
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('terminal-view').style.display = 'flex';
+
+    term.open(document.getElementById('terminal'));
+    fitAddon.fit();
+    window.addEventListener('resize', () => fitAddon.fit());
+
+    // WebSocket 연결
+    ws = new WebSocket(`ws://${location.host}/ws/sandbox`);
+
+    ws.onopen = () => {
+      setStatus('connected', '연결됨');
+      term.focus();
+    };
+
+    ws.onclose = () => {
+      setStatus('disconnected', '연결 끊김');
+      term.writeln('\r\n\x1b[31m[연결이 종료되었습니다]\x1b[0m');
+    };
+
+    ws.onerror = () => {
+      setStatus('disconnected', '오류');
+      term.writeln('\r\n\x1b[31m[WebSocket 오류가 발생했습니다]\x1b[0m');
+    };
+
+    ws.onmessage = (event) => {
+      term.write(event.data);
+    };
+
+    term.onData((data) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(data);
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
